@@ -54,52 +54,60 @@ fn write_to_file(path: String, json_data: &mut Value, should_pretty_print: bool)
 }
 
 fn remove_null_values(json_data: &mut Value) {
-    if json_data.is_object() {
-        let object_map = json_data
-            .as_object_mut()
-            .expect("Could not parse object from json");
+    match json_data {
+        Value::Object(_) => remove_null_values_from_object(json_data),
+        Value::Array(_) => remove_null_values_from_array(json_data),
+        _ => (),
+    }
+}
 
-        // Collect keys to remove
-        let keys_to_remove: Vec<String> = object_map
-            .iter()
-            .filter_map(|(key, value)| {
-                if value.is_null() {
-                    Some(key.clone())
-                } else {
-                    None
-                }
-            })
-            .collect();
+fn remove_null_values_from_object(json_data: &mut Value) {
+    let object_map = json_data
+        .as_object_mut()
+        .expect("Could not parse object from json");
 
-        for key in keys_to_remove {
-            log::debug!("Removing key {}", key);
-            object_map.remove(&key);
-        }
+    // Collect keys to remove
+    let keys_to_remove: Vec<String> = object_map
+        .iter()
+        .filter_map(|(key, value)| {
+            if value.is_null() {
+                Some(key.clone())
+            } else {
+                None
+            }
+        })
+        .collect();
 
-        // Go a lever deeper w recursion
-        for value in object_map.values_mut() {
-            remove_null_values(value);
-        }
-    } else if json_data.is_array() {
-        let array = json_data
-            .as_array_mut()
-            .expect("Could not parse array from json");
+    for key in keys_to_remove {
+        log::debug!("Removing key {}", key);
+        object_map.remove(&key);
+    }
 
-        // Collect indices to remove
-        let indices_to_remove: Vec<usize> = array
-            .iter()
-            .enumerate()
-            .filter_map(|(index, value)| if value.is_null() { Some(index) } else { None })
-            .collect();
+    // Go a lever deeper w recursion
+    for value in object_map.values_mut() {
+        remove_null_values(value);
+    }
+}
 
-        for index in indices_to_remove.iter().rev() {
-            log::debug!("Removing item with index {}", index);
-            array.remove(*index);
-        }
+fn remove_null_values_from_array(json_data: &mut Value) {
+    let array = json_data
+        .as_array_mut()
+        .expect("Could not parse array from json");
 
-        // Go a lever deeper w recursion
-        for value in array.iter_mut() {
-            remove_null_values(value);
-        }
+    // Collect indices to remove
+    let indices_to_remove: Vec<usize> = array
+        .iter()
+        .enumerate()
+        .filter_map(|(index, value)| if value.is_null() { Some(index) } else { None })
+        .collect();
+
+    for index in indices_to_remove.iter().rev() {
+        log::debug!("Removing item with index {}", index);
+        array.remove(*index);
+    }
+
+    // Go a lever deeper w recursion
+    for value in array.iter_mut() {
+        remove_null_values(value);
     }
 }
