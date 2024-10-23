@@ -16,15 +16,21 @@ struct Args {
 }
 
 fn main() {
+    env_logger::init();
     let args = Args::parse();
 
-    println!(
-        "Hello! I'm going to try to read a file from {}, clean it up, and output it to {}",
-        args.file, args.output
+    log::debug!(
+        "Attempting read from {}, and will try write to {}",
+        args.file,
+        args.output
     );
-    let v = &mut read_from_file(args.file).expect("Failed to parse the file contents!");
-    remove_null_values(v);
-    write_to_file(args.output, v, args.pretty);
+
+    let json_data = &mut read_from_file(args.file).expect("Failed to parse the file contents!");
+
+    remove_null_values(json_data);
+    write_to_file(args.output, json_data, args.pretty);
+
+    println!("Successfully processed file.")
 }
 
 fn read_from_file(file_path: String) -> Result<Value> {
@@ -35,21 +41,23 @@ fn read_from_file(file_path: String) -> Result<Value> {
     Ok(v)
 }
 
-fn write_to_file(path: String, v: &mut Value, should_pretty_print: bool) {
+fn write_to_file(path: String, json_data: &mut Value, should_pretty_print: bool) {
     let file = &mut File::create(path).expect("Could not create file!");
 
-    println!("Should pretty print: {}", should_pretty_print);
+    log::debug!("Should pretty print: {}", should_pretty_print);
 
     if should_pretty_print {
-        serde_json::to_writer_pretty(file, v).expect("Could not write to file");
+        serde_json::to_writer_pretty(file, json_data).expect("Could not write to file");
     } else {
-        serde_json::to_writer(file, v).expect("Could not write to file");
+        serde_json::to_writer(file, json_data).expect("Could not write to file");
     }
 }
 
-fn remove_null_values(v: &mut Value) {
-    if v.is_object() {
-        let object_map = v.as_object_mut().expect("Could not parse object from json");
+fn remove_null_values(json_data: &mut Value) {
+    if json_data.is_object() {
+        let object_map = json_data
+            .as_object_mut()
+            .expect("Could not parse object from json");
 
         // Collect keys to remove
         let keys_to_remove: Vec<String> = object_map
@@ -64,7 +72,7 @@ fn remove_null_values(v: &mut Value) {
             .collect();
 
         for key in keys_to_remove {
-            println!("Removing key {}", key);
+            log::debug!("Removing key {}", key);
             object_map.remove(&key);
         }
 
@@ -72,8 +80,10 @@ fn remove_null_values(v: &mut Value) {
         for value in object_map.values_mut() {
             remove_null_values(value);
         }
-    } else if v.is_array() {
-        let array = v.as_array_mut().expect("Could not parse array from json");
+    } else if json_data.is_array() {
+        let array = json_data
+            .as_array_mut()
+            .expect("Could not parse array from json");
 
         // Collect indices to remove
         let indices_to_remove: Vec<usize> = array
@@ -83,7 +93,7 @@ fn remove_null_values(v: &mut Value) {
             .collect();
 
         for index in indices_to_remove.iter().rev() {
-            println!("Removing item with index {}", index);
+            log::debug!("Removing item with index {}", index);
             array.remove(*index);
         }
 
