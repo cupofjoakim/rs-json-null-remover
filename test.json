@@ -32,7 +32,8 @@
                 "id": "Pause"
             },
             {
-                "id": "Mute"
+                "id": "Mute",
+                "label": null
             },
             null,
             {

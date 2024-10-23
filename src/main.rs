@@ -1,5 +1,6 @@
 use clap::Parser;
 use serde_json::{Map, Value};
+use std::time::Instant;
 use std::{
     fs::File,
     io::{self, BufReader},
@@ -20,6 +21,8 @@ struct Args {
 }
 
 fn main() {
+    let now = Instant::now();
+
     env_logger::init();
     let args = Args::parse();
 
@@ -36,7 +39,10 @@ fn main() {
     write_to_file(args.output, json_data, args.pretty)
         .expect("Failed to write cleaned json to file, panicking...");
 
-    println!("Successfully processed file.");
+    println!(
+        "Success! Processed file in {:.4}s",
+        now.elapsed().as_secs_f32()
+    );
 }
 
 fn read_from_file(file_path: PathBuf) -> Result<Value, io::Error> {
