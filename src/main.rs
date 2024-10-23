@@ -30,7 +30,7 @@ fn main() {
     remove_null_values(json_data);
     write_to_file(args.output, json_data, args.pretty);
 
-    println!("Successfully processed file.")
+    println!("Successfully processed file.");
 }
 
 fn read_from_file(file_path: PathBuf) -> Result<Value> {
