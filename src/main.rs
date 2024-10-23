@@ -10,9 +10,11 @@ struct Args {
 
     #[arg(short, long)]
     output: String,
+
+    #[arg(short, long, action)]
+    pretty: bool,
 }
 
-// Simple CLI to remove null values from a json file of unknown depth
 fn main() {
     let args = Args::parse();
 
@@ -22,8 +24,7 @@ fn main() {
     );
     let v = &mut read_from_file(args.file).expect("Failed to parse the file contents!");
     remove_null_values(v);
-    write_to_file(args.output, v);
-    //println!("{:#?}", v);
+    write_to_file(args.output, v, args.pretty);
 }
 
 fn read_from_file(file_path: String) -> Result<Value> {
@@ -34,9 +35,16 @@ fn read_from_file(file_path: String) -> Result<Value> {
     Ok(v)
 }
 
-fn write_to_file(path: String, v: &mut Value) {
-    let mut file = File::create(path).expect("Could not create file!");
-    serde_json::to_writer_pretty(&mut file, v).expect("Could not write to file");
+fn write_to_file(path: String, v: &mut Value, should_pretty_print: bool) {
+    let file = &mut File::create(path).expect("Could not create file!");
+
+    println!("Should pretty print: {}", should_pretty_print);
+
+    if should_pretty_print {
+        serde_json::to_writer_pretty(file, v).expect("Could not write to file");
+    } else {
+        serde_json::to_writer(file, v).expect("Could not write to file");
+    }
 }
 
 fn remove_null_values(v: &mut Value) {
