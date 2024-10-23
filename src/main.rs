@@ -40,10 +40,7 @@ fn main() {
 }
 
 fn read_from_file(file_path: PathBuf) -> Result<Value, io::Error> {
-    let file = match File::open(file_path) {
-        Ok(file) => file,
-        Err(err) => return Err(err),
-    };
+    let file = File::open(file_path)?;
     let reader = BufReader::new(file);
     let v = serde_json::from_reader(reader)?;
 
@@ -55,10 +52,7 @@ fn write_to_file(
     json_data: &mut Value,
     should_pretty_print: bool,
 ) -> Result<(), io::Error> {
-    let file = match File::create(file_path) {
-        Ok(file) => file,
-        Err(err) => return Err(err),
-    };
+    let file = File::create(file_path)?;
 
     log::debug!("Should pretty print: {}", should_pretty_print);
 
