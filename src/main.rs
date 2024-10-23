@@ -1,15 +1,15 @@
 use clap::Parser;
 use serde_json::{Result, Value};
-use std::{fs::File, io::BufReader};
+use std::{fs::File, io::BufReader, path::PathBuf};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
     #[arg(short, long)]
-    file: String,
+    file: PathBuf,
 
     #[arg(short, long)]
-    output: String,
+    output: PathBuf,
 
     #[arg(short, long, action)]
     pretty: bool,
@@ -21,8 +21,8 @@ fn main() {
 
     log::debug!(
         "Attempting read from {}, and will try write to {}",
-        args.file,
-        args.output
+        args.file.display(),
+        args.output.display()
     );
 
     let json_data = &mut read_from_file(args.file).expect("Failed to parse the file contents!");
@@ -33,7 +33,7 @@ fn main() {
     println!("Successfully processed file.")
 }
 
-fn read_from_file(file_path: String) -> Result<Value> {
+fn read_from_file(file_path: PathBuf) -> Result<Value> {
     let file = File::open(file_path).expect("Could not open file!");
     let reader = BufReader::new(file);
     let v = serde_json::from_reader(reader)?;
@@ -41,8 +41,8 @@ fn read_from_file(file_path: String) -> Result<Value> {
     Ok(v)
 }
 
-fn write_to_file(path: String, json_data: &mut Value, should_pretty_print: bool) {
-    let file = &mut File::create(path).expect("Could not create file!");
+fn write_to_file(file_path: PathBuf, json_data: &mut Value, should_pretty_print: bool) {
+    let file = &mut File::create(file_path).expect("Could not create file!");
 
     log::debug!("Should pretty print: {}", should_pretty_print);
 
