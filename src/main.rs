@@ -1,8 +1,8 @@
 use clap::Parser;
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::{
     fs::File,
-    io::{self, BufReader, Error, ErrorKind},
+    io::{self, BufReader},
     path::PathBuf,
 };
 
@@ -73,19 +73,15 @@ fn write_to_file(
 
 fn remove_null_values(json_data: &mut Value) -> Result<(), io::Error> {
     match json_data {
-        Value::Object(_) => remove_null_values_from_object(json_data),
-        Value::Array(_) => remove_null_values_from_array(json_data),
+        Value::Object(object) => remove_null_values_from_object(object),
+        Value::Array(array) => remove_null_values_from_array(array),
         _ => Ok(()),
     }
 }
 
-fn remove_null_values_from_object(json_data: &mut Value) -> Result<(), io::Error> {
-    let object_map = json_data
-        .as_object_mut()
-        .ok_or(Error::new(ErrorKind::InvalidInput, "Failed to read object"))?;
-
+fn remove_null_values_from_object(object: &mut Map<String, Value>) -> Result<(), io::Error> {
     // Collect keys to remove
-    let keys_to_remove: Vec<String> = object_map
+    let keys_to_remove: Vec<String> = object
         .iter()
         .filter_map(|(key, value)| {
             if value.is_null() {
@@ -98,22 +94,18 @@ fn remove_null_values_from_object(json_data: &mut Value) -> Result<(), io::Error
 
     for key in keys_to_remove {
         log::debug!("Removing key {}", key);
-        object_map.remove(&key);
+        object.remove(&key);
     }
 
     // Go a lever deeper w recursion
-    for value in object_map.values_mut() {
+    for value in object.values_mut() {
         remove_null_values(value)?;
     }
 
     Ok(())
 }
 
-fn remove_null_values_from_array(json_data: &mut Value) -> Result<(), io::Error> {
-    let array = json_data
-        .as_array_mut()
-        .ok_or(Error::new(ErrorKind::InvalidInput, "Failed to read array"))?;
-
+fn remove_null_values_from_array(array: &mut Vec<Value>) -> Result<(), io::Error> {
     // Collect indices to remove
     let indices_to_remove: Vec<usize> = array
         .iter()
