@@ -13,9 +13,9 @@ fn get_obj_without_null_values(object: &Map<String, Value>) -> Option<Value> {
     let cleaned_obj: Map<String, Value> = object
         .iter()
         .filter_map(|(key, value)| {
-            let v = get_without_null_values(value);
-            if v.is_some() {
-                return Some((key.to_owned(), v.unwrap()));
+            let v_option = get_without_null_values(value);
+            if let Some(v) = v_option {
+                return Some((key.to_owned(), v));
             }
             None
         })
@@ -24,11 +24,8 @@ fn get_obj_without_null_values(object: &Map<String, Value>) -> Option<Value> {
     Some(Value::Object(cleaned_obj))
 }
 
-fn get_arr_without_null_values(array: &Vec<Value>) -> Option<Value> {
-    let cleaned_arr: Vec<Value> = array
-        .iter()
-        .filter_map(|value| get_without_null_values(value))
-        .collect();
+fn get_arr_without_null_values(array: &[Value]) -> Option<Value> {
+    let cleaned_arr: Vec<Value> = array.iter().filter_map(get_without_null_values).collect();
 
     Some(Value::Array(cleaned_arr))
 }
