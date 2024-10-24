@@ -41,7 +41,7 @@ fn main() {
     let json_data = &mut read_from_file(args.file).expect("Failed to parse the file contents!");
 
     if args.assemble {
-        let data = &mut get_without_null_values(json_data.to_owned())
+        let data = &mut get_without_null_values(json_data)
             .expect("Failed to remove null values, panicking...");
 
         write_to_file(args.output, data, args.pretty)
