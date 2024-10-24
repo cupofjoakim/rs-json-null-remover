@@ -1,7 +1,17 @@
 use serde_json::{Map, Value};
 use std::io::{self};
 
-pub fn remove_null_values(json_data: &mut Value) -> Result<(), io::Error> {
+pub fn remove_null_values(json_data: &mut Value) -> Option<Value> {
+    let result = process_value(json_data);
+
+    if result.is_ok() {
+        Some(json_data.to_owned())
+    } else {
+        None
+    }
+}
+
+fn process_value(json_data: &mut Value) -> Result<(), io::Error> {
     match json_data {
         Value::Object(object) => remove_null_values_from_object(object),
         Value::Array(array) => remove_null_values_from_array(array),
@@ -14,7 +24,7 @@ fn remove_null_values_from_object(object: &mut Map<String, Value>) -> Result<(),
 
     // Go a lever deeper w recursion
     for value in object.values_mut() {
-        remove_null_values(value)?;
+        process_value(value)?;
     }
 
     Ok(())
@@ -25,7 +35,7 @@ fn remove_null_values_from_array(array: &mut Vec<Value>) -> Result<(), io::Error
 
     // Go a lever deeper w recursion
     for value in array.iter_mut() {
-        remove_null_values(value)?;
+        process_value(value)?;
     }
 
     Ok(())

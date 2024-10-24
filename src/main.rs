@@ -2,6 +2,7 @@ use assembler::get_without_null_values;
 use clap::Parser;
 use cleaner::remove_null_values;
 use file_handler::{read_from_file, write_to_file};
+use serde_json::Value;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -38,23 +39,24 @@ fn main() {
         args.output.display()
     );
 
-    let json_data = &mut read_from_file(args.file).expect("Failed to parse the file contents!");
+    let raw_data = &mut read_from_file(args.file).expect("Failed to parse the file contents!");
 
-    if args.assemble {
-        let data = &mut get_without_null_values(json_data)
-            .expect("Failed to remove null values, panicking...");
+    let processed_data =
+        process_data(raw_data, args.assemble).expect("Failed to process file, panicking...");
 
-        write_to_file(args.output, data, args.pretty)
-            .expect("Failed to write cleaned json to file, panicking...");
-    } else {
-        remove_null_values(json_data).expect("Failed to remove null values, panicking...");
-
-        write_to_file(args.output, json_data, args.pretty)
-            .expect("Failed to write cleaned json to file, panicking...");
-    }
+    write_to_file(args.output, processed_data, args.pretty)
+        .expect("Failed to write cleaned json to file, panicking...");
 
     println!(
         "Success! Processed file in {:.4}s",
         now.elapsed().as_secs_f32()
     );
+}
+
+fn process_data(json_data: &mut Value, should_use_assembler: bool) -> Option<Value> {
+    if should_use_assembler {
+        get_without_null_values(json_data)
+    } else {
+        remove_null_values(json_data)
+    }
 }

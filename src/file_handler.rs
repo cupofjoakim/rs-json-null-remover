@@ -15,7 +15,7 @@ pub fn read_from_file(file_path: PathBuf) -> Result<Value, io::Error> {
 
 pub fn write_to_file(
     file_path: PathBuf,
-    json_data: &mut Value,
+    json_data: Value,
     should_pretty_print: bool,
 ) -> Result<(), io::Error> {
     let file = File::create(file_path)?;
@@ -23,9 +23,9 @@ pub fn write_to_file(
     log::debug!("Should pretty print: {}", should_pretty_print);
 
     if should_pretty_print {
-        serde_json::to_writer_pretty(file, json_data)?;
+        serde_json::to_writer_pretty(file, &json_data)?;
     } else {
-        serde_json::to_writer(file, json_data)?;
+        serde_json::to_writer(file, &json_data)?;
     }
 
     Ok(())
